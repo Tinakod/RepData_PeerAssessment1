@@ -1,25 +1,88 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+##Loading and processing the data
+
+```{r, echo=TRUE}
+x <- read.csv("activity.csv")
+colnames(x)
+x$date <- as.Date(x$date)
+```
+
+##Mean total number of steps taken by day
+##Total number of steps by day excluding missing values
+
+```{r, echo=TRUE}
+library(dplyr)
+stepsbydate <- x  %>% 
+  select(date, steps) %>%
+  group_by(date) %>%
+  summarise(stps= sum(steps)) %>%
+  na.omit()
+head(stepsbydate)
+```
+
+##Histogram of total number of steps
+
+```{r, echo=TRUE}
+hist(stepsbydate$stps, xlab = "Total number of steps daily", main = "Histogram of total number of steps by day", breaks = 20)
+```
+##Mean and median number of steps taken by day
+```{r, echo=TRUE}
+mean(stepsbydate$stps)
+median(stepsbydate$stps)
+```
+
+##Time series plot excluding NAs
+```{r, echo=TRUE}
+library(ggplot2)
+xinterval <- x %>%
+  select(interval, steps) %>%
+  na.omit() %>%
+  group_by(interval) %>%
+  summarise(stps = mean(steps))
+ggplot(xinterval, aes(x=interval, y=stps))+ geom_line() +
+  xlab("5-minute interval")+
+  ylab("average number of steps taken")
+```
+
+##The 5-min interval than on average contains the maximum number of steps
+
+```{r, echo=TRUE}
+xinterval[which(xinterval$stps==max(xinterval$stps)), ]
+```
+
+##Imputing missing values
+##Calculate the total number of missing values
+```{r, echo=TRUE}
+NA_number <- length(which(is.na(x$steps)))
+print(NA_number)
+```
+##Strategy and dataset 
+```{r, echo=TRUE}
+library(Hmisc)
+ximp <- x
+ximp$steps <- impute(x$steps, fun = mean)
+```
+##Histogram of total number of steps daily
+```{r, echo=TRUE}
+stepsbydateimp <- tapply(ximp$steps, ximp$date, sum)
+qplot(stepsbydateimp, xlab = "Total steps by day imputed", ylab= "Frequency using binwith 500", binwidth=500)
+```
+##Calculate the mean and median
+```{r, echo=TRUE}
+mean(stepsbydateimp)
+median(stepsbydateimp)
+```
+##Create a new factor variable in the dataset with two levels – “weekday” and “weekend”
+```{r, echo =TRUE}
+ximp$dateType <- ifelse(as.POSIXlt(ximp$date)$wday %in% c(0,6), "weekend", "weekday")
+```
+##Panel plot containing a time series plot
+```{r, echo=TRUE}
+avximp <- aggregate(steps ~ interval + dateType, data = ximp, mean)
+ggplot(avximp, aes(interval, steps))+
+  geom_line()+
+  facet_grid(dateType ~ .) +
+  xlab("5 minute interval") +
+  ylab("average number of steps")
+```
 
 
-## Loading and preprocessing the data
-
-
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
