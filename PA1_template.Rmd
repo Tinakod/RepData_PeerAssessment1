@@ -18,6 +18,8 @@ stepsbydate <- x  %>%
   na.omit()
 head(stepsbydate)
 ```
+```{r}
+
 
 ##Histogram of total number of steps
 
